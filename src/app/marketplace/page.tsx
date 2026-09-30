@@ -90,10 +90,13 @@ const CropCard = ({
    Marketplace Page
 ------------------------- */
 export default function MarketplacePage() {
-  const [crops, setCrops] = useState<Crop[]>([]);
+  const [crops, setCrops] = useState<Crop[]>(() => {
+    const savedCrops = localStorage.getItem("crops");
+    return savedCrops ? JSON.parse(savedCrops) : [];
+  });
+
   const [searchSell, setSearchSell] = useState("");
   const [searchBuy, setSearchBuy] = useState("");
-
   const [form, setForm] = useState({
     name: "",
     quantity: 0,
@@ -134,8 +137,8 @@ export default function MarketplacePage() {
       location,
       certified: true,
     };
-    setCrops([...crops, newCrop]);
-    setForm({ name: "", quantity: 0, price: 0, certificateLink: "", cropImageLink: "", location: "" });
+   setCrops([...crops, newCrop]);
+localStorage.setItem("crops", JSON.stringify([...crops, newCrop]));;
     alert("Crop successfully listed!");
   };
 
@@ -148,7 +151,23 @@ export default function MarketplacePage() {
       return;
     }
     alert(`You bought ${buyQty} kg of ${crop.name}!`);
-    const updatedCrops = crops.map((c) =>
+    const newTransaction = {
+  id: Date.now(),
+  type: "buy",
+  item: `${crop.name} (${buyQty}kg)`,
+  amount: crop.price * buyQty,
+  date: new Date().toISOString().split("T")[0],
+  status: "completed",
+};
+const existingTransactions = JSON.parse(
+  localStorage.getItem("transactions") || "[]"
+);
+
+localStorage.setItem(
+  "transactions",
+  JSON.stringify([newTransaction, ...existingTransactions])
+);
+const updatedCrops = crops.map((c) =>
       c.id === crop.id ? { ...c, quantity: c.quantity - buyQty } : c
     );
     setCrops(updatedCrops);

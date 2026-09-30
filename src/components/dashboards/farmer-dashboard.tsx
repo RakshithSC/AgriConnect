@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { User, History, Heart, Bell, Settings, TrendingUp } from "lucide-react";
-
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc,updateDoc } from "firebase/firestore";
 // Placeholder Weather widget
 const WeatherWidget = () => (
   <div className="bg-blue-100 p-4 rounded-lg shadow-md">
@@ -47,17 +48,80 @@ export default function FarmerDashboard() {
     setCropInfo(info || { error: "No data available for this crop." });
   };
 
-  const user = { name: "Rajesh Kumar", location: "Punjab, India", type: "Farmer", avatar: "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg?auto=compress&cs=tinysrgb&w=150" };
-  const stats = { totalSales: 125000, totalPurchases: 45000, activeListings: 8, completedTransactions: 23 };
+  const [user, setUser] = useState({
+  name: "Loading...",
+  location: "India",
+  type: "Farmer",
+  avatar: "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg?auto=compress&cs=tinysrgb&w=150",
+});
+useEffect(() => {
+  const loadUser = async () => {
+    if (!auth.currentUser) return;
 
-  const transactions: Transaction[] = [
-    { id: 1, type: "sell", item: "Basmati Rice (100kg)", amount: 4500, date: "2024-12-20", status: "completed" },
-    { id: 2, type: "buy", item: "Seed Drill Machine (Rental)", amount: 1500, date: "2024-12-18", status: "completed" },
-    { id: 3, type: "sell", item: "Fresh Tomatoes (50kg)", amount: 1750, date: "2024-12-15", status: "pending" },
-    { id: 4, type: "buy", item: "Organic Fertilizer (25kg)", amount: 800, date: "2024-12-12", status: "completed" },
-    { id: 5, type: "sell", item: "Premium Wheat (200kg)", amount: 5000, date: "2024-12-10", status: "completed" },
-  ];
+    const userDoc = await getDoc(
+      doc(db, "users", auth.currentUser.uid)
+    );
 
+    if (userDoc.exists()) {
+      const data = userDoc.data();
+
+      setUser({
+        name: data.fullName || "User",
+        location: "India",
+        type: data.role || "Farmer",
+        avatar:
+          "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg?auto=compress&cs=tinysrgb&w=150",
+      });
+    }
+  };
+
+  loadUser();
+}, []);
+ const handleProfileUpdate = async () => {
+  if (!auth.currentUser) return;
+
+  try {
+    await updateDoc(doc(db, "users", auth.currentUser.uid), {
+      fullName: user.name,
+      location: user.location,
+    });
+
+    alert("Profile updated successfully!");
+  } catch (error) {
+    console.error(error);
+    alert("Failed to update profile.");
+  }
+};
+ const [transactions, setTransactions] = useState<Transaction[]>([
+  { id: 1, type: "sell", item: "Basmati Rice (100kg)", amount: 4500, date: "2024-12-20", status: "completed" },
+  { id: 2, type: "buy", item: "Seed Drill Machine (Rental)", amount: 1500, date: "2024-12-18", status: "completed" },
+  { id: 3, type: "sell", item: "Fresh Tomatoes (50kg)", amount: 1750, date: "2024-12-15", status: "pending" },
+  { id: 4, type: "buy", item: "Organic Fertilizer (25kg)", amount: 800, date: "2024-12-12", status: "completed" },
+  { id: 5, type: "sell", item: "Premium Wheat (200kg)", amount: 5000, date: "2024-12-10", status: "completed" },
+]);
+
+useEffect(() => {
+  const storedTransactions = localStorage.getItem("transactions");
+
+  if (storedTransactions) {
+    setTransactions(JSON.parse(storedTransactions));
+  }
+}, []);
+const stats = {
+  totalSales: transactions
+    .filter((t) => t.type === "sell")
+    .reduce((sum, t) => sum + t.amount, 0),
+
+  totalPurchases: transactions
+    .filter((t) => t.type === "buy")
+    .reduce((sum, t) => sum + t.amount, 0),
+
+  activeListings: 8,
+
+  completedTransactions: transactions.filter(
+    (t) => t.status === "completed"
+  ).length,
+};
   const savedItems: SavedItem[] = [
     { id: 1, name: "John Deere Tractor", type: "equipment", price: 650000, image: "https://i.pinimg.com/1200x/bb/9a/f7/bb9af77bbac1afd29a5eaa60ca38c5ca.jpg" },
     { id: 2, name: "Organic Carrots", type: "crop", price: 30, image: "https://images.pexels.com/photos/143133/pexels-photo-143133.jpeg?auto=compress&cs=tinysrgb&w=200" },
@@ -247,9 +311,20 @@ export default function FarmerDashboard() {
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold mb-6">Profile</h3>
               <div className="space-y-4">
-                <input type="text" defaultValue={user.name} className="w-full px-3 py-2 border rounded-md" />
-                <input type="text" defaultValue={user.location} className="w-full px-3 py-2 border rounded-md" />
-                <button className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">Update Profile</button>
+                <input
+  type="text"
+  value={user.name}
+  onChange={(e) => setUser({ ...user, name: e.target.value })}
+  className="w-full px-3 py-2 border rounded-md"
+/><input
+  type="text"
+  value={user.location}
+  onChange={(e) => setUser({ ...user, location: e.target.value })}
+  className="w-full px-3 py-2 border rounded-md"
+/>
+                <button onClick={handleProfileUpdate} className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
+  Update Profile
+</button>
               </div>
             </div>
           )}

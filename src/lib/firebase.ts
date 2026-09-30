@@ -4,12 +4,13 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  projectId: "agriconnect-mjdns",
-  appId: "1:529419671401:web:2ea3e0b362d2371aac4ff8",
-  storageBucket: "agriconnect-mjdns.firebasestorage.app",
-  apiKey: "AIzaSyCwEJsYVBz2wHNrRnVL0-6Dsu5D_jw0x8E",
-  authDomain: "agriconnect-mjdns.firebaseapp.com",
-  messagingSenderId: "529419671401",
+  apiKey: "AIzaSyCXpXIqnB2zjmiqZ9V-27jl5w74qOFem-M",
+  authDomain: "agriconnect-eda20.firebaseapp.com",
+  projectId: "agriconnect-eda20",
+  storageBucket: "agriconnect-eda20.firebasestorage.app",
+  messagingSenderId: "164816587050",
+  appId: "1:164816587050:web:a98bb6d96a148b5f3b3653",
+  measurementId: "G-V9HVGD0BM0"
 };
 
 // Initialize Firebase
